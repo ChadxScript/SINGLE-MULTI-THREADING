@@ -89,8 +89,19 @@ def preemptive_priority_sched(processes):
         timeElapsed += 1
         processes[highestIndex].burst_time -= 1
 
+        # Check if the process is completed
         if processes[highestIndex].burst_time == 0:
             processes[highestIndex].completion_time = timeElapsed
+
+        # Update the highest priority if a new process with higher priority arrives
+        highest_priority = float('inf')
+        for i in range(n):
+            if processes[i].arrival_time <= timeElapsed and processes[i].priority < highest_priority and processes[i].burst_time > 0:
+                highest_priority = processes[i].priority
+                highestIndex = i
+
+    return processes
+
 
 
 def calculate_metrics(processes):
