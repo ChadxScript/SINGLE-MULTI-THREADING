@@ -1,6 +1,10 @@
-from collections import deque
-import heapq
-
+#   Operating System : Threading
+#   Activity 2
+#
+#   [Group 3]
+#       Calulang, Mary Jane
+#       Barrios, Armand Angelo
+#       Oloroso, Andrew
 
 class Process:
     def __init__(self, process_id, arrival_time, burst_time, priority):
@@ -8,118 +12,87 @@ class Process:
         self.arrival_time = arrival_time
         self.burst_time = burst_time
         self.priority = priority
-        self.completion_time = 0
+        self.completion_time = None
 
 
-def round_robin_sched(processes, time_quantum):
+def round_robin_sched(r_processes, r_time_quantum):
     queue = []
     timeElapsed = 0
-    n = len(processes)
-    remainTime = [p.burst_time for p in processes]
+    remainingTime = [p.burst_time for p in r_processes]
 
-    while True:
-        allEnded = True
+    for r_process in r_processes:
+        queue.append(r_process)
 
-        for i in range(n):
-            if remainTime[i] > 0:
-                allEnded = False
+    # sort by burst time
+    queue.sort(key=lambda p: p.arrival_time)
 
-                if remainTime[i] <= time_quantum:
-                    timeElapsed += remainTime[i]
-                    remainTime[i] = 0
-                    processes[i].completion_time = timeElapsed
-                else:
-                    timeElapsed += time_quantum
-                    remainTime[i] -= time_quantum
+    while queue:
+        c_process = queue.pop(0)
 
-        if allEnded:
-            break
+        if remainingTime[c_process.process_id - 1] > r_time_quantum:
+            timeElapsed += r_time_quantum
+            remainingTime[c_process.process_id - 1] -= r_time_quantum
+            queue.append(c_process)
+        else:
+            timeElapsed += remainingTime[c_process.process_id - 1]
+            c_process.completion_time = timeElapsed
+            remainingTime[c_process.process_id - 1] = 0
 
-
-def shortest_job_first_sched(processes):
-    # Shortest Job First (SJF) CPU scheduling algorithm
-    time_elapsed = 0
-    n = len(processes)
-    remaining_time = [p.burst_time for p in processes]
-
-    while True:
-        all_ended = True
-
-        remaining_processes = [i for i in range(n) if remaining_time[i] > 0]
-
-        if not remaining_processes:
-            break
-
-        min_index = min(
-            remaining_processes,
-            key=lambda i: remaining_time[i]
-        )
-
-        if remaining_time[min_index] > 0:
-            all_ended = False
-            time_elapsed += remaining_time[min_index]
-            remaining_time[min_index] = 0
-            processes[min_index].completion_time = time_elapsed
-
-        if all_ended:
-            break
-
-    return processes
+    calculate_metrics(r_processes)
 
 
-def preemptive_priority_sched(processes):
+def shortest_job_first_sched(sjf_processes):
     queue = []
     timeElapsed = 0
-    n = len(processes)
 
-    while True:
-        allEnded = True
-        highest_priority = float('inf')
-        highestIndex = -1
+    for sjf_process in sjf_processes:
+        queue.append(sjf_process)
 
-        for i in range(n):
-            if processes[i].arrival_time <= timeElapsed and processes[i].priority < highest_priority and processes[i].burst_time > 0:
-                allEnded = False
-                highest_priority = processes[i].priority
-                highestIndex = i
+    # sort by burst time
+    queue.sort(key=lambda p: p.burst_time)
 
-        if allEnded:
-            break
+    while queue:
+        c_process = queue.pop(0)
+        timeElapsed += c_process.burst_time
+        c_process.completion_time = timeElapsed
 
-        timeElapsed += 1
-        processes[highestIndex].burst_time -= 1
-
-        # Check if the process is completed
-        if processes[highestIndex].burst_time == 0:
-            processes[highestIndex].completion_time = timeElapsed
-
-        # Update the highest priority if a new process with higher priority arrives
-        highest_priority = float('inf')
-        for i in range(n):
-            if processes[i].arrival_time <= timeElapsed and processes[i].priority < highest_priority and processes[i].burst_time > 0:
-                highest_priority = processes[i].priority
-                highestIndex = i
-
-    return processes
+    calculate_metrics(sjf_processes)
 
 
+def preemptive_priority_sched(preemp_processes):
+    queue = []
+    timeElapsed = 0
 
-def calculate_metrics(processes):
+    for preemp_process in preemp_processes:
+        queue.append(preemp_process)
+
+    # sort by burst time
+    queue.sort(key=lambda p: p.priority)
+
+    while queue:
+        c_process = queue.pop(0)
+        timeElapsed += c_process.burst_time
+        c_process.completion_time = timeElapsed
+
+    calculate_metrics(preemp_processes)
+
+
+def calculate_metrics(cal_processes):
     # Calculate and print performance metrics for the processes
-    n = len(processes)
-    print("\nProcess\t\tTurnaround time\t\tWaiting Time")
+    n = len(cal_processes)
+    print("Process\t\tTurnaround time\t\tWaiting Time")
     total_waitingTime = 0
     total_turnaroundTime = 0
 
-    for p in processes:
+    for p in cal_processes:
         turnaround_time = p.completion_time - p.arrival_time
         waitingTime = p.completion_time - p.arrival_time - p.burst_time
         total_waitingTime += waitingTime
         total_turnaroundTime += turnaround_time
         print(f"\t{p.process_id}\t\t\t{turnaround_time}\t\t\t\t\t{waitingTime}")
 
-    cpuUtilization = total_turnaroundTime / processes[-1].completion_time
-    systemThroughput = n / processes[-1].completion_time
+    cpuUtilization = total_turnaroundTime / cal_processes[-1].completion_time
+    systemThroughput = n / cal_processes[-1].completion_time
     avg_waitingTime = total_waitingTime / n
     avg_turnaroundTime = total_turnaroundTime / n
 
@@ -158,13 +131,11 @@ for i in range(1, num_processes + 1):
 # Run scheduling algorithms
 time_quantum = get_valid_integer_input("\nEnter the time quantum for Round Robin scheduling: ")
 
+print("\n---ROUND ROBIN---")
 round_robin_sched(processes, time_quantum)
-calculate_metrics(processes)
 
+print("\n---SJF---")
 shortest_job_first_sched(processes)
-calculate_metrics(processes)
 
+print("\n---PREEMPTIVE PRIORITY---")
 preemptive_priority_sched(processes)
-calculate_metrics(processes)
-
-print("\nProgram terminated.")
